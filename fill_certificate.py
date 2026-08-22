@@ -27,9 +27,10 @@ REQUIRED_FIELDS = [
 
 # --- Данные организации (Йети Парк) — меняются редко, вынесены в константы ---
 ORG_INN = "2543105803"
-ORG_KPP = ""  # TODO: указать КПП организации
+ORG_KPP = "254301001"
 ORG_NAME = 'ООО "Йети парк"'  # шрифт бланка не поддерживает кавычки-ёлочки « »
 ORG_FULL_TIME = "1"  # обучение (занятия) очные — всегда "1"
+DEFAULT_SIGNER_NAME = "Сорокин Александр Михайлович"
 
 DOC_TYPE_CODES = {
     "birth_cert": "03",  # свидетельство о рождении
@@ -71,7 +72,7 @@ def build_field_values(data):
     student_dob_d, student_dob_m, student_dob_y = split_date(data["student_dob"])
     student_doc_d, student_doc_m, student_doc_y = split_date(data["student_doc_date"])
 
-    signer_last, signer_first, signer_middle = split_fio(data.get("signer_name", ""))
+    signer_last, signer_first, signer_middle = split_fio(data.get("signer_name") or DEFAULT_SIGNER_NAME)
     sign_date = data.get("sign_date") or date.today().isoformat()
     sign_d, sign_m, sign_y = split_date(sign_date)
 

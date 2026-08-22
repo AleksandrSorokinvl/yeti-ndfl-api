@@ -1,0 +1,25 @@
+{
+  "year": 2026,
+  "student_name": "Иванова Мария Петровна",
+  "student_dob": "2015-04-12",
+  "student_doc_type": "birth_cert",
+  "student_doc_no": "II-ВС 123456",
+  "student_doc_date": "2015-04-20",
+  "student_inn": "",
+
+  "payer_name": "Иванов Пётр Сергеевич",
+  "payer_dob": "1988-01-15",
+  "payer_inn": "250801123456",
+  "payer_passport": "0512 345678",
+  "payer_passport_date": "2012-03-01",
+
+  "phone": "+7 924 000-00-00",
+  "email": "client@example.com",
+  "contract": "№ 45 от 05.09.2025",
+
+  "cert_number": "1",
+  "correction_number": "0",
+  "amount_rub": 39600,
+  "signer_name": "Директор Директорович Директоров",
+  "sign_date": "2026-08-21"
+}

@@ -28,7 +28,7 @@ REQUIRED_FIELDS = [
 # --- Данные организации (Йети Парк) — меняются редко, вынесены в константы ---
 ORG_INN = "2543105803"
 ORG_KPP = "254301001"
-ORG_NAME = 'ООО "Йети парк"'  # шрифт бланка не поддерживает кавычки-ёлочки « »
+ORG_NAME = 'Общество с ограниченной ответственностью "Йети парк"'  # шрифт бланка не поддерживает кавычки-ёлочки « »
 ORG_FULL_TIME = "1"  # обучение (занятия) очные — всегда "1"
 DEFAULT_SIGNER_NAME = "Сорокин Александр Михайлович"
 
@@ -44,6 +44,23 @@ def split_fio(full_name):
     first = parts[1] if len(parts) > 1 else ""
     middle = " ".join(parts[2:]) if len(parts) > 2 else ""
     return last, first, middle
+
+
+def wrap_text(text, width, max_lines):
+    words = text.split()
+    lines = []
+    current = ""
+    for word in words:
+        candidate = f"{current} {word}".strip()
+        if len(candidate) > width:
+            lines.append(current)
+            current = word
+        else:
+            current = candidate
+    if current:
+        lines.append(current)
+    lines += [""] * (max_lines - len(lines))
+    return lines[:max_lines]
 
 
 def split_date(iso_date):
@@ -78,8 +95,7 @@ def build_field_values(data):
 
     amount_whole, amount_kop = split_amount(data.get("amount_rub"))
 
-    org_name_lines = [ORG_NAME[i:i + 40] for i in range(0, len(ORG_NAME), 40)]
-    org_name_lines += [""] * (4 - len(org_name_lines))
+    org_name_lines = wrap_text(ORG_NAME, 40, 4)
 
     values = {
         # Шапка (общая для обеих страниц)

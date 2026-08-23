@@ -17,6 +17,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from fill_certificate import render_pdf_bytes
+from counter import next_cert_number
 
 app = FastAPI(title="Yeti Park — заполнение справки КНД 1151158")
 
@@ -53,8 +54,12 @@ def fill_certificate(payload: CertificateRequest, x_api_key: str = Header(defaul
     if not API_KEY or x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Неверный или отсутствующий X-Api-Key")
 
+    data = payload.model_dump()
+    if not data.get("cert_number"):
+        data["cert_number"] = next_cert_number()
+
     try:
-        pdf_bytes = render_pdf_bytes(payload.model_dump())
+        pdf_bytes = render_pdf_bytes(data)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 

@@ -74,7 +74,7 @@ def build_field_values(data):
     sign_date = data.get("sign_date") or date.today().isoformat()
     sign_d, sign_m, sign_y = split_date(sign_date)
     amount_whole, amount_kop = split_amount(data.get("amount_rub"))
-    org_name_lines = wrap_text(ORG_NAME, 40, 4)
+    org_name_lines = wrap_text(ORG_NAME.upper(), 40, 4)
     values = {
         # Шапка (общая для обеих страниц)
         "Text1": ORG_INN,

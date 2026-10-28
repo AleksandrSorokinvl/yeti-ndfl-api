@@ -13,7 +13,7 @@ import sys
 from datetime import date
 from pathlib import Path
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import NameObject, BooleanObject
+from pypdf.generic import NameObject, BooleanObject, DecodedStreamObject, DictionaryObject
 TEMPLATE_PATH = Path(__file__).parent / "template.pdf"
 REQUIRED_FIELDS = [
     "year", "student_name", "student_dob", "student_doc_type", "student_doc_no",
@@ -77,7 +77,7 @@ def build_field_values(data):
     org_name_lines = wrap_text(ORG_NAME.upper(), 40, 4)
     values = {
         # Шапка (общая для обеих страниц)
-        "Text1": ORG_INN,
+        "Text1": ORG_INN.ljust(12, "-"),
         "Text2": ORG_KPP,
         # Стр. 1 — номер справки / корректировка / год
         "Text4": str(data.get("cert_number") or "").ljust(12, "-"),
@@ -108,7 +108,7 @@ def build_field_values(data):
         "Text17.1": signer_first,
         "Text17.2": signer_middle,
         "Text9.1.1": sign_d, "Text10.1.1": sign_m, "Text11.1.1": sign_y,
-        "Text5.1": "2",
+        "Text5.1": "2--",
         # Стр. 2 — данные ребёнка (обучающегося)
         "Text18.0": student_last,
         "Text18.1": student_first,
@@ -121,6 +121,28 @@ def build_field_values(data):
         "Text30": f"{sign_d}.{sign_m}.{sign_y}" if sign_d else "",
     }
     return values
+def set_page_number(writer, page, number):
+    """Заменяет печатный номер в растровом бланке, сохраняя границы ячеек."""
+    resources = page["/Resources"]
+    if "/Font" not in resources:
+        resources[NameObject("/Font")] = DictionaryObject()
+    resources["/Font"][NameObject("/PageNumberFont")] = (
+        writer._root_object["/AcroForm"]["/DR"]["/Font"]["/CourierNew"]
+    )
+    centers = (361.4, 375.7, 389.9) if number == 1 else (347.2, 361.4, 375.7)
+    commands = ["q", "1 1 1 rg"]
+    for center in centers:
+        commands.append(f"{center - 5.3:.2f} 790.5 10.6 13.5 re f")
+    commands.extend(["0 0 0 rg", "BT", "/PageNumberFont 16 Tf"])
+    for center, character in zip(centers, f"{number}--"):
+        commands.append(f"1 0 0 1 {center - 4.8:.2f} 792 Tm ({character}) Tj")
+    commands.extend(["ET", "Q"])
+    overlay = DecodedStreamObject()
+    overlay.set_data(("\n".join(commands) + "\n").encode("ascii"))
+    original = page.get_contents().get_data()
+    overlay.set_data(original + b"\n" + overlay.get_data())
+    page[NameObject("/Contents")] = writer._add_object(overlay)
+
 def render_pdf_bytes(data: dict) -> bytes:
     """Заполняет шаблон данными и возвращает готовый PDF как bytes."""
     missing = [f for f in REQUIRED_FIELDS if not data.get(f)]
@@ -130,7 +152,8 @@ def render_pdf_bytes(data: dict) -> bytes:
     writer = PdfWriter()
     writer.append(reader)
     values = build_field_values(data)
-    for page in writer.pages:
+    for number, page in enumerate(writer.pages, start=1):
+        set_page_number(writer, page, number)
         writer.update_page_form_field_values(page, values, auto_regenerate=True)
     if writer._root_object.get("/AcroForm") is not None:
         writer._root_object["/AcroForm"][NameObject("/NeedAppearances")] = BooleanObject(True)

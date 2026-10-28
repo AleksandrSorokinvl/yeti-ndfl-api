@@ -77,7 +77,7 @@ def build_field_values(data):
     org_name_lines = wrap_text(ORG_NAME.upper(), 40, 4)
     values = {
         # Шапка (общая для обеих страниц)
-        "Text1": ORG_INN.ljust(12, "-"),
+        "Text1": ORG_INN,
         "Text2": ORG_KPP,
         # Стр. 1 — номер справки / корректировка / год
         "Text4": str(data.get("cert_number") or "").ljust(12, "-"),
@@ -136,6 +136,14 @@ def set_page_number(writer, page, number):
     commands.extend(["0 0 0 rg", "BT", "/PageNumberFont 16 Tf"])
     for center, character in zip(centers, f"{number}--"):
         commands.append(f"1 0 0 1 {center - 4.8:.2f} 792 Tm ({character}) Tj")
+    # Прочерки ИНН рисуем тем же шрифтом, что и номер страницы.
+    inn_left, inn_right, inn_bottom = (
+        (196.76, 368.134, 808.721) if number == 1 else (182.76, 353.48, 807.721)
+    )
+    cell_width = (inn_right - inn_left) / 12
+    for cell in (10, 11):
+        center = inn_left + (cell + 0.5) * cell_width
+        commands.append(f"1 0 0 1 {center - 4.8:.2f} {inn_bottom + 4:.2f} Tm (-) Tj")
     commands.extend(["ET", "Q"])
     overlay = DecodedStreamObject()
     overlay.set_data(("\n".join(commands) + "\n").encode("ascii"))
